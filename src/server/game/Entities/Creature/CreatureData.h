@@ -20,6 +20,7 @@
 
 #include "Unit.h"
 #include "UnitDefines.h"
+enum class VisibilityDistanceType : uint8;
 
 enum CreatureFlagsExtra : uint32
 {
@@ -65,6 +66,66 @@ enum CreatureFlagsExtra : uint32
 
 };
 
+enum class CreatureGroundMovementType : uint8
+{
+    None,
+    Run,
+    Hover,
+
+    Max
+};
+
+enum class CreatureFlightMovementType : uint8
+{
+    None,
+    DisableGravity,
+    CanFly,
+
+    Max
+};
+
+enum class CreatureChaseMovementType : uint8
+{
+    Run,
+    CanWalk,
+    AlwaysWalk,
+
+    Max
+};
+
+enum class CreatureRandomMovementType : uint8
+{
+    Walk,
+    CanRun,
+    AlwaysRun,
+
+    Max
+};
+
+struct TC_GAME_API CreatureMovementData
+{
+    CreatureMovementData();
+
+    CreatureGroundMovementType Ground;
+    CreatureFlightMovementType Flight;
+    bool Swim;
+    bool Rooted;
+    CreatureChaseMovementType Chase;
+    CreatureRandomMovementType Random;
+    uint32 InteractionPauseTimer;
+
+    bool IsGroundAllowed() const { return Ground != CreatureGroundMovementType::None; }
+    bool IsSwimAllowed() const { return Swim; }
+    bool IsFlightAllowed() const { return Flight != CreatureFlightMovementType::None; }
+    bool IsRooted() const { return Rooted; }
+
+    CreatureChaseMovementType GetChase() const { return Chase; }
+    CreatureRandomMovementType GetRandom() const { return Random; }
+
+    uint32 GetInteractionPauseTimer() const { return InteractionPauseTimer; }
+
+    std::string ToString() const;
+};
 
 static uint8 const MAX_KILL_CREDIT = 2;
 static uint32 const MAX_CREATURE_MODELS = 4;
@@ -129,7 +190,7 @@ struct TC_GAME_API CreatureTemplate
     uint32  maxgold;
     std::string AIName;
     uint32  MovementType;
-    uint32  InhabitType;
+    CreatureMovementData Movement;
     float   HoverHeight;
     float   ModHealth;
     float   ModMana;
@@ -224,5 +285,23 @@ struct CreatureLocale
 };
 
 #pragma pack(pop)
+
+// `creature_addon` table
+struct CreatureAddon
+{
+    uint32 path_id;
+    uint32 mount;
+    uint8 standState;
+    uint8 animTier;
+    uint8 sheathState;
+    uint8 pvpFlags;
+    uint8 visFlags;
+    uint32 emote;
+    uint16 ai_anim_kit;
+    uint16 movement_anim_kit;
+    uint16 melee_anim_kit;
+    std::vector<uint32> auras;
+    VisibilityDistanceType visibilityDistanceType;
+};
 
 #endif // CreatureData_h__

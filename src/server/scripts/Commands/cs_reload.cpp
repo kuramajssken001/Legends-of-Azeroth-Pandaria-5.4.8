@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -93,6 +93,7 @@ public:
             { "creature_questender",            SEC_ADMINISTRATOR,  true,   &HandleReloadCreatureQuestEnderCommand,         },
             { "creature_linked_respawn",        SEC_ADMINISTRATOR,  true,   &HandleReloadLinkedRespawnCommand,              },
             { "creature_loot_template",         SEC_ADMINISTRATOR,  true,   &HandleReloadLootTemplatesCreatureCommand,      },
+            { "creature_movement_override",     SEC_ADMINISTRATOR,  true,   &HandleReloadCreatureMovementOverrideCommand,   },
             { "creature_onkill_reputation",     SEC_ADMINISTRATOR,  true,   &HandleReloadOnKillReputationCommand,           },
             { "creature_queststarter",          SEC_ADMINISTRATOR,  true,   &HandleReloadCreatureQuestStarterCommand,       },
             { "creature_scaling",               SEC_ADMINISTRATOR,  true,   &HandleReloadCreatureScallingCommand,           },
@@ -538,22 +539,21 @@ public:
             cInfo->maxgold            = fields[67].GetUInt32();
             cInfo->AIName             = fields[68].GetString();
             cInfo->MovementType       = fields[69].GetUInt8();
-            cInfo->InhabitType        = fields[70].GetUInt8();
-            cInfo->HoverHeight        = fields[71].GetFloat();
-            cInfo->ModHealth          = fields[72].GetFloat();
-            cInfo->ModMana            = fields[73].GetFloat();
-            cInfo->ModManaExtra       = fields[74].GetFloat();
-            cInfo->ModArmor           = fields[75].GetFloat();
-            cInfo->RacialLeader       = fields[76].GetBool();
+            cInfo->HoverHeight        = fields[70].GetFloat();
+            cInfo->ModHealth          = fields[71].GetFloat();
+            cInfo->ModMana            = fields[72].GetFloat();
+            cInfo->ModManaExtra       = fields[73].GetFloat();
+            cInfo->ModArmor           = fields[74].GetFloat();
+            cInfo->RacialLeader       = fields[75].GetBool();
 
             for (uint8 i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
-                cInfo->questItems[i] = fields[77 + i].GetUInt32();
+                cInfo->questItems[i] = fields[76 + i].GetUInt32();
 
-            cInfo->movementId         = fields[83].GetUInt32();
-            cInfo->RegenHealth        = fields[84].GetBool();
-            cInfo->MechanicImmuneMask = fields[85].GetUInt32();
-            cInfo->flags_extra        = fields[86].GetUInt32();
-            cInfo->ScriptID           = sObjectMgr->GetScriptId(fields[87].GetCString());
+            cInfo->movementId         = fields[82].GetUInt32();
+            cInfo->RegenHealth        = fields[83].GetBool();
+            cInfo->MechanicImmuneMask = fields[84].GetUInt32();
+            cInfo->flags_extra        = fields[85].GetUInt32();
+            cInfo->ScriptID           = sObjectMgr->GetScriptId(fields[86].GetCString());
 
             sObjectMgr->CheckCreatureTemplate(cInfo);
         }
@@ -666,6 +666,14 @@ public:
         sConditionMgr->LoadConditions(true);
         return true;
     }
+
+    static bool HandleReloadCreatureMovementOverrideCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        TC_LOG_INFO("misc", "Re-Loading Creature movement overrides...");
+        sObjectMgr->LoadCreatureMovementOverrides();
+        handler->SendGlobalGMSysMessage("DB table `creature_movement_override` reloaded.");
+        return true;
+    }    
 
     static bool HandleReloadLootTemplatesDisenchantCommand(ChatHandler* handler, const char* /*args*/)
     {

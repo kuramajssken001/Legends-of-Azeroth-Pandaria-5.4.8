@@ -523,7 +523,7 @@ void Unit::UpdateSplineMovement(uint32 t_diff)
     if (arrived)
     {
         if (movespline->HasAnimation())
-            SetAnimationTier(movespline->GetAnimation());
+            SetAnimTier(movespline->GetAnimation());
 
         DisableSpline();
     }
@@ -14954,28 +14954,28 @@ void Unit::SendMovementFlagUpdate(bool self /* = false */)
 
 bool Unit::IsSitState() const
 {
-    uint8 s = getStandState();
+    uint8 s = GetStandState();
     return s == UNIT_STAND_STATE_SIT_CHAIR || s == UNIT_STAND_STATE_SIT_LOW_CHAIR || s == UNIT_STAND_STATE_SIT_MEDIUM_CHAIR ||
         s == UNIT_STAND_STATE_SIT_HIGH_CHAIR || s == UNIT_STAND_STATE_SIT;
 }
 
 bool Unit::IsStandState() const
 {
-    uint8 s = getStandState();
+    uint8 s = GetStandState();
     return !IsSitState() && s != UNIT_STAND_STATE_SLEEP && s != UNIT_STAND_STATE_KNEEL;
 }
 
-void Unit::SetStandState(uint8 state)
+void Unit::SetStandState(UnitStandStateType state)
 {
-    SetByteValue(UNIT_FIELD_ANIM_TIER, 0, state);
+    SetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_STAND_STATE, state);
 
-    if (IsStandState())
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_SEATED);
+    if (state == UNIT_STAND_STATE_STAND)
+       RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_SEATED);
 
     if (GetTypeId() == TYPEID_PLAYER)
     {
         WorldPacket data(SMSG_STANDSTATE_UPDATE, 1);
-        data << (uint8) state;
+        data << (uint8)state;
         ToPlayer()->GetSession()->SendPacket(&data);
     }
 }
@@ -14991,6 +14991,14 @@ bool Unit::IsPolymorphed() const
         return false;
 
     return spellInfo->GetSpellSpecific() == SPELL_SPECIFIC_MAGE_POLYMORPH;
+}
+
+void Unit::SetAnimTier(AnimTier tier)
+{
+    if (!IsCreature())
+        return;
+
+    SetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_ANIM_TIER, static_cast<uint8>(tier));
 }
 
 void Unit::SetDisplayId(uint32 modelId)
@@ -19362,7 +19370,7 @@ bool Unit::SetDisableGravity(bool disable, bool packetOnly /*= false*/)
 {
     if (!packetOnly)
     {
-        if (disable == IsLevitating())
+        if (disable == IsGravityDisabled())
             return false;
 
         if (disable)
@@ -19435,7 +19443,7 @@ bool Unit::SetCanFly(bool enable)
     else
     {
         RemoveUnitMovementFlag(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_MASK_MOVING_FLY);
-        if (!IsLevitating() && (GetTypeId() != TYPEID_PLAYER || HasUnitMovementFlag(MOVEMENTFLAG_FLYING)))
+        if (!IsGravityDisabled() && (GetTypeId() != TYPEID_PLAYER || HasUnitMovementFlag(MOVEMENTFLAG_FLYING)))
             SetFall(true);
     }
 
@@ -19516,11 +19524,11 @@ bool Unit::SetHover(bool enable, bool packetOnly /*= false*/)
 
         //! Unconfirmed for players:
         if (enable)
-            SetAnimationTier(UnitAnimationTier::Hover);
-        else if (IsLevitating())
-            SetAnimationTier(UnitAnimationTier::Fly);
+            SetAnimTier(AnimTier::Hover);
+        else if (IsGravityDisabled())
+            SetAnimTier(AnimTier::Fly);
         else
-            SetAnimationTier(UnitAnimationTier::Ground);
+            SetAnimTier(AnimTier::Ground);
     }
 
     if (enable)

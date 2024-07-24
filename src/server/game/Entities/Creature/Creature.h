@@ -148,20 +148,6 @@ enum ChatType
 #pragma pack(pop)
 #endif
 
-// `creature_addon` table
-struct CreatureAddon
-{
-    uint32 path_id;
-    uint32 mount;
-    uint32 bytes1;
-    uint32 bytes2;
-    uint32 emote;
-    uint16 ai_anim_kit;
-    uint16 movement_anim_kit;
-    uint16 melee_anim_kit;
-    std::vector<uint32> auras;
-};
-
 typedef std::unordered_map<uint32, CreatureAddon> CreatureAddonContainer;
 
 // Vendors
@@ -283,7 +269,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         void SelectLevel(const CreatureTemplate* cinfo);
         void LoadEquipment(int8 id = 1, bool force = false);
 
-        uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
+        uint32 GetDBTableGUIDLow() const { return m_spawnId; }
 
         void Update(uint32 time) override;         // overwrited Unit::Update
         void GetRespawnPosition(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
@@ -295,23 +281,17 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         bool IsTrigger() const { return GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_TRIGGER; }
         bool IsGuard() const { return GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_GUARD; }
         
-        bool CanWalk() const { return GetInhabitType() & INHABIT_GROUND; }
+        CreatureMovementData const& GetMovementTemplate() const;
+        bool CanWalk() const { return GetMovementTemplate().IsGroundAllowed(); }
         bool CanSwim() const override;
         bool CanEnterWater() const override;
-        bool CanFly() const override { return GetInhabitType() & INHABIT_AIR; }
+        bool CanFly()  const override { return GetMovementTemplate().IsFlightAllowed() || IsFlying(); }
+        bool CanHover() const { return GetMovementTemplate().Ground == CreatureGroundMovementType::Hover || IsHovering(); } 
 
         // Used to dynamically change allowed path generator and movement flags behavior during scripts.
         // Can be used to allow ground-only creatures to temporarily fly, restrict flying creatures to the ground etc.
-        void OverrideInhabitType(InhabitTypeValues inhabitType) { m_inhabitTypeOverride = inhabitType; }
-        void ResetInhabitTypeOverride() { m_inhabitTypeOverride = (InhabitTypeValues)0; }
-        InhabitTypeValues GetInhabitType() const
-        {
-            if (IsPet())
-                return INHABIT_GROUND | INHABIT_WATER;
-            if (m_inhabitTypeOverride)
-                return m_inhabitTypeOverride;
-            return (InhabitTypeValues)GetCreatureTemplate()->InhabitType;
-        }
+        void OverrideInhabitType(InhabitTypeValues inhabitType) {  } // todo remove in future 
+        void ResetInhabitTypeOverride() { } // todo remove in future
 
         void SetReactState(ReactStates st) { m_reactState = st; }
         ReactStates GetReactState() { return m_reactState; }
@@ -612,7 +592,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         ReactStates m_reactState;                           // for AI, not charmInfo
 
         MovementGeneratorType m_defaultMovementType;
-        uint32 m_DBTableGuid;                               ///< For new or temporary creatures is 0 for saved it is lowguid
+        ObjectGuid::LowType m_spawnId;                      ///< For new or temporary creatures is 0 for saved it is lowguid
         uint8 m_equipmentId;
         int8 m_originalEquipmentId; // can be -1
 
@@ -635,8 +615,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         CreatureTemplate const* m_creatureInfo;                 // Can differ from sObjectMgr->GetCreatureTemplate(GetEntry()) in difficulty mode > 0
         CreatureData const* m_creatureData;
-
-        InhabitTypeValues m_inhabitTypeOverride = INHABIT_NONE;
 
         uint16 m_LootMode;                                  // Bitmask (default: LOOT_MODE_DEFAULT) that determines what loot will be lootable
         uint32 guid_transport;
