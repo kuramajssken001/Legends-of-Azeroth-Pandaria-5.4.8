@@ -21,10 +21,25 @@
 #include "Packet.h"
 #include <array>
 
+enum WeatherState : uint32;
+
 namespace WorldPackets
 {
     namespace Misc
     {
+        class TC_GAME_API Weather final : public ServerPacket
+        {
+        public:
+            Weather();
+            Weather(WeatherState weatherID, float intensity = 0.0f, bool abrupt = false);
+
+            WorldPacket const* Write() override;
+
+            bool Abrupt = false;
+            float Intensity = 0.0f;
+            WeatherState WeatherID = WeatherState(0);
+        };        
+
         class StartMirrorTimer final : public ServerPacket
         {
         public:
@@ -51,6 +66,16 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             uint32 Timer = 0;
+        };
+
+        class CorpseReclaimDelay : public ServerPacket
+        {
+        public:
+            CorpseReclaimDelay() : ServerPacket(SMSG_CORPSE_RECLAIM_DELAY, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 Remaining = 0;
         };
 
         class FarSight final : public ClientPacket

@@ -599,15 +599,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         virtual uint8 GetLevelForTarget(WorldObject const* /*target*/) const { return 1; }
 
-        void MonsterSay(const char* text, uint32 language, WorldObject const* target);
-        void MonsterYell(const char* text, uint32 language, WorldObject const* target);
-        void MonsterTextEmote(const char* text, WorldObject const* target, bool IsBossEmote = false);
-        void MonsterWhisper(const char* text, Player const* target, bool IsBossWhisper = false);
-        void MonsterSay(int32 textId, uint32 language, WorldObject const* target);
-        void MonsterYell(int32 textId, uint32 language, WorldObject const* target);
-        void MonsterTextEmote(int32 textId, WorldObject const* target, bool IsBossEmote = false);
-        void MonsterWhisper(int32 textId, Player const* target, bool IsBossWhisper = false);
-
         void PlayDistanceSound(uint32 sound_id, Player* target = NULL);
         void PlayDirectSound(uint32 sound_id, Player* target = NULL);
         void PlayDirectMusic(uint32 music_id, Player* target = NULL);
@@ -741,9 +732,9 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         virtual uint16 GetMeleeAnimKitId() const { return 0; }
 
         // Watcher
-        bool IsPrivateObject() const { return _privateObjectOwner != 0; }
+        bool IsPrivateObject() const { return !_privateObjectOwner.IsEmpty(); }
         ObjectGuid GetPrivateObjectOwner() const { return _privateObjectOwner; }
-        void SetPrivateObjectOwner(ObjectGuid owner) { _privateObjectOwner = owner; }
+        void SetPrivateObjectOwner(ObjectGuid const& owner) { _privateObjectOwner = owner; }
         bool CheckPrivateObjectOwnerVisibility(WorldObject const* seer) const;
 
         void AddToUpdate() override;
